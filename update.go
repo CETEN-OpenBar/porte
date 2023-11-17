@@ -24,7 +24,7 @@ func init() {
 	client := github.NewClient(nil)
 
 	// list all organizations for user "willnorris"
-	release, _, err := client.Repositories.GetLatestRelease(context.Background(), "CETEN-OpenBar", "bar")
+	release, _, err := client.Repositories.GetLatestRelease(context.Background(), "CETEN-OpenBar", "porte")
 	if err != nil {
 		logrus.WithError(err).Error("failed to get latest release")
 		return
