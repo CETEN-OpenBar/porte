@@ -14,8 +14,8 @@ import (
 )
 
 type OpenRequest struct {
-	CardID  string `json:"card_id"`
-	CardPIN string `json:"card_pin"`
+	CardID   string `json:"card_id"`
+	Password string `json:"password"`
 }
 
 func checkRequest(c echo.Context) error {
@@ -30,12 +30,12 @@ func checkRequest(c echo.Context) error {
 		return c.JSON(400, gin.H{"error": err.Error()})
 	}
 
-	logrus.Debug("POST /auth/card: ", string(data))
+	logrus.Debug("POST /auth/password: ", string(data))
 	rdr := bytes.NewReader(data)
 
 	// Http client with X-Local-Token
 	client := &http.Client{}
-	request, err := http.NewRequest("POST", conf.ApiURL+"/auth/card", rdr)
+	request, err := http.NewRequest("POST", conf.ApiURL+"/auth/password", rdr)
 	if err != nil {
 		return c.JSON(400, gin.H{"error": err.Error()})
 	}
@@ -50,8 +50,8 @@ func checkRequest(c echo.Context) error {
 	}
 
 	if r.StatusCode != http.StatusOK {
-		logrus.Debug("/auth/card returned ", r.StatusCode)
-		return c.JSON(400, gin.H{"error": "invalid card"})
+		logrus.Debug("/auth/password returned ", r.StatusCode)
+		return c.JSON(400, gin.H{"error": "invalid password/card"})
 	}
 
 	request, err = http.NewRequest("GET", conf.ApiURL+"/account/admin", nil)
