@@ -109,6 +109,8 @@ func sendToACM(c echo.Context, data []byte) error {
 			continue
 		}
 		logrus.Debug("Wrote ", n, " bytes")
+
+		port.Close()
 	}
 
 	// Write 1 to ttyACM*
