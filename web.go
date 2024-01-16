@@ -3,14 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io/fs"
+	"log"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
+	"go.bug.st/serial"
 )
 
 type OpenRequest struct {
@@ -90,28 +89,57 @@ func checkRequest(c echo.Context) error {
 }
 
 func sendToACM(c echo.Context, data []byte) error {
-	// Write 1 to ttyACM*
-	files := os.DirFS("/dev")
-	err := fs.WalkDir(files, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if strings.HasPrefix(path, "ttyACM") {
-			f, err := os.OpenFile("/dev/"+path, os.O_RDWR, 0755)
-			if err != nil {
-				return err
-			}
-
-			f.Write([]byte(data))
-			f.Close()
-		}
-
-		return nil
-	})
+	ports, err := serial.GetPortsList()
 	if err != nil {
-		return c.JSON(400, gin.H{"error": err.Error()})
+		log.Fatal(err)
 	}
+
+	for _, port := range ports {
+		mode := &serial.Mode{}
+
+		port, err := serial.Open(port, mode)
+		if err != nil {
+			logrus.Error(err)
+			continue
+		}
+
+		n, err := port.Write([]byte(data))
+		if err != nil {
+			logrus.Error(err)
+			continue
+		}
+		logrus.Debug("Wrote ", n, " bytes")
+	}
+
+	// Write 1 to ttyACM*
+	// files := os.DirFS("/dev")
+	// err := fs.WalkDir(files, ".", func(path string, d fs.DirEntry, err error) error {
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	if strings.HasPrefix(path, "ttyACM") {
+	// 		options := serial.RawOptions
+	// 		options.BitRate = 115200
+	// 		p, err := options.Open("/dev/tty")
+	// 		if err != nil {
+	// 			log.Panic(err)
+	// 		}
+
+	// 		_, err = s.Write([]byte(data))
+	// 		if err != nil {
+	// 			log.Fatal("Cannot write bytes. ", err)
+	// 		}
+
+	// 		f.Write([]byte())
+	// 		f.Close()
+	// 	}
+
+	// 	return nil
+	// })
+	// if err != nil {
+	// 	return c.JSON(400, gin.H{"error": err.Error()})
+	// }
 	return nil
 }
 
